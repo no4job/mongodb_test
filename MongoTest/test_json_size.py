@@ -35,6 +35,8 @@ def get_model_element(elem):
     modelElement["id"]=next(iter(elem.xpath("./@ElementId")),"")
     modelElement["type"]=next(iter(elem.xpath("./@TypeID")),"")
     data_section_2=[]
+    record_counter=0
+    value_counter=0
     for attributeElement in elem.xpath("./www.qpr.com:Attribute",namespaces={'www.qpr.com': 'www.qpr.com'}):
         fieldName=next(iter(attributeElement.xpath("./@AttributeName")),"")
         fieldName=fieldName.replace('.', '\uff0E')
@@ -42,8 +44,10 @@ def get_model_element(elem):
         field_values_array=[]
         valueArray=[]
         valueArray.extend(attributeElement.xpath("./www.qpr.com:Value/text()",namespaces={'www.qpr.com': 'www.qpr.com'}))
+
         if len(valueArray):
             field_values_array.append(dict(Value=valueArray))
+            value_counter+=1
         records=[]
         for recordElement in attributeElement.xpath("./www.qpr.com:Record",namespaces={'www.qpr.com': 'www.qpr.com'}):
             #record=[]
@@ -56,13 +60,19 @@ def get_model_element(elem):
                 #recordField[recordFieldName]=recordFieldValue
                 #record.append(recordField)
                 record[recordFieldName]=recordFieldValue
+                record_counter+=1
             records.append(record)
         if len(records):
             field_values_array.append(dict(Record=records))
         field[fieldName]=field_values_array
         data_section_2.append(field)
     modelElement["data_section_2"]=data_section_2
-    return modelElement
+    result={}
+    result["modelElement"]= modelElement
+    result["record_counter"]= record_counter
+    result["value_counter"]= value_counter
+    result["element_size"]=len(str(json.dumps(modelElement,ensure_ascii=False)))
+    return result
 def uniq(seq):
     seen = set()
     seen_add = seen.add
@@ -113,6 +123,7 @@ if __name__ == '__main__':
     #elements_with_dot_count_no_Multiplicity=0
     corrected_modelElement={}
     err_msg={}
+    csv=""
     for action, elem in context:
         if action=="end":
             count+=1
@@ -125,21 +136,18 @@ if __name__ == '__main__':
                 # elements_with_dot_count+=1
                 # err_msg[modelElement["id"]]=str(err)
 
-            #print (modelElement["name"])
-            #print(json.dumps(modelElement,ensure_ascii=False).encode('utf8'))
-            #print(json.dumps({'Translation': 'Аргус СЛТУ'},ensure_ascii=False, encoding='utf8'))
-            #json_string = json.dumps(u"ברי צקלה", ensure_ascii=False)
-            import sys
-            print (sys.stdout.encoding)
-            print (u"Stöcker".encode(sys.stdout.encoding, errors='replace'))
-            print (u"Стоескер".encode(sys.stdout.encoding, errors='replace'))
+            spr="\t"
+            sq=[]
+            sq.append(modelElement["modelElement"]["name"])
+            sq.append(modelElement["modelElement"]["id"])
+            sq.append(modelElement["modelElement"]["type"])
+            sq.append(str(modelElement["element_size"]))
+            sq.append(str(modelElement["record_counter"]))
+            sq.append(str(modelElement["value_counter"]))
 
-            json_string = "ברי צקלה"
-            sys.stdout.buffer.write(json_string.encode('utf-8'))
-            print('š áč')
-            print (json_string )
-
-            print (json_string.decode("utf8").encode(sys.stdout.encoding, errors='replace') )
+            csv_line=spr.join(sq)
+            csv+=csv_line+"\n"
+            #print(csv_line)
             if count % 1000  == 0 or count==1:
                 print(count)
                 t.stop()
@@ -149,9 +157,12 @@ if __name__ == '__main__':
             elem.clear()
             while elem.getprevious() is not None:
                 del elem.getparent()[0]
-                if count>=1000:
-                    break
+            # if count>=1000:
+            #     break
     del context
+    with open("model_stat.csv","w",encoding="utf-8")as model_stat:
+        model_stat.write(csv)
+
     print(count)
     t.stop()
     print(t.elapsed)
