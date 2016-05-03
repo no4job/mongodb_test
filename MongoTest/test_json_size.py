@@ -1,3 +1,4 @@
+# coding: utf8
 import copy
 
 __author__ = 'mdu'
@@ -24,8 +25,8 @@ def get_model_element(elem):
     modelElement["model_revision"]=""
     modelElement["description"]=""
     modelElement["native_id"]=""
-    modelElement["creation_date"]=datetime.now()
-    modelElement["change_date"]=datetime.now()
+    modelElement["creation_date"]=str(datetime.now())
+    modelElement["change_date"]=str(datetime.now())
     modelElement["archive"]="false"
     modelElement["deleted"]="false"
     #***************************************************
@@ -86,7 +87,7 @@ def remove_dots(data):
             #remove_dots(item)
             if type(item)is dict or type(item)is list:
                 remove_dots(item)
-        #if item is dict: data[key] = remove_dots(data[key])
+                #if item is dict: data[key] = remove_dots(data[key])
     return data
 if __name__ == '__main__':
     time_total=Timer()
@@ -95,11 +96,11 @@ if __name__ == '__main__':
     t.start()
     # start_time=datetime.now()
     # print("Start processing: "+start_time.strftime("%d.%m.%Y %H:%M:%S.%f"))
-    client = MongoClient()
-    client.drop_database("modelDB")
-    db=client.modelDB
-
-    model = db.model
+    # client = MongoClient()
+    # client.drop_database("modelDB")
+    # db=client.modelDB
+    #
+    # model = db.model
 
     #input_file='C:\\IdeaProjects\\hh_api_test\\MongoTest\\exp_types_formatted_few_elements.xml'
     #***input_file='exp_types_formatted_few_elements.xml'
@@ -116,18 +117,29 @@ if __name__ == '__main__':
         if action=="end":
             count+=1
             modelElement=get_model_element(elem)
-            try:
-                model.insert(modelElement)
-            except errors.InvalidDocument as err:
-                # print("ElementName:{0}; ElementID:{1}; InvalidDocument: {2}".\
-                #         format(modelElement["name"],modelElement["id"],err))
-                #print(json.dumps( modelElement))
-                elements_with_dot_count+=1
-                err_msg[modelElement["id"]]=str(err)
-                # if "Multiplicity" not in str(err):
-                #     elements_with_dot_count_no_Multiplicity+=1
-                # exit
+            #*******************************************
+            # try:
+            #     model.insert(modelElement)
+            # except errors.InvalidDocument as err:
+
+                # elements_with_dot_count+=1
+                # err_msg[modelElement["id"]]=str(err)
+
             #print (modelElement["name"])
+            #print(json.dumps(modelElement,ensure_ascii=False).encode('utf8'))
+            #print(json.dumps({'Translation': 'Аргус СЛТУ'},ensure_ascii=False, encoding='utf8'))
+            #json_string = json.dumps(u"ברי צקלה", ensure_ascii=False)
+            import sys
+            print (sys.stdout.encoding)
+            print (u"Stöcker".encode(sys.stdout.encoding, errors='replace'))
+            print (u"Стоескер".encode(sys.stdout.encoding, errors='replace'))
+
+            json_string = "ברי צקלה"
+            sys.stdout.buffer.write(json_string.encode('utf-8'))
+            print('š áč')
+            print (json_string )
+
+            print (json_string.decode("utf8").encode(sys.stdout.encoding, errors='replace') )
             if count % 1000  == 0 or count==1:
                 print(count)
                 t.stop()
@@ -137,8 +149,8 @@ if __name__ == '__main__':
             elem.clear()
             while elem.getprevious() is not None:
                 del elem.getparent()[0]
-        # if count>=1000:
-        #     break
+                if count>=1000:
+                    break
     del context
     print(count)
     t.stop()
@@ -147,7 +159,7 @@ if __name__ == '__main__':
     print("Total import time:{}".format(time_total.elapsed))
     print("Total elements:{}".format(count))
     #print("Elements with dot in field name:{}".format(elements_with_dot_count))
-    print("Inserted documents:{}".format(model.count()))
+    #print("Inserted documents:{}".format(model.count()))
     #db.orders.count()
     err_msg_uniq=uniq(err_msg.values())
     print("Elements with dot or $  in field name:{}".format(len(err_msg)))
