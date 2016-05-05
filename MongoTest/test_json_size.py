@@ -192,7 +192,7 @@ if __name__ == '__main__':
     print(count)
     t.stop()
     print(t.elapsed)
-    time_total.stop()
+    time_total.stop() 
     print("Total import time:{}".format(time_total.elapsed))
     print("Total elements:{}".format(count))
     #print("Elements with dot in field name:{}".format(elements_with_dot_count))
