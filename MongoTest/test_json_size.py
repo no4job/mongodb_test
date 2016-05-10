@@ -39,6 +39,8 @@ def get_model_element(elem):
     modelElement["archive"]="false"
     modelElement["deleted"]="false"
     #***************************************************
+    modelElementSize=0
+    #***************************************************
 
     modelElement["name"]=next(iter(elem.xpath("./@ElementName")),"")
     modelElement["id"]=next(iter(elem.xpath("./@ElementId")),"")
@@ -51,8 +53,16 @@ def get_model_element(elem):
     value_size_counter=0
     attribute_counter=0
     field_stat=[]
+    attribute_stat=[]
+    #*****************************************************
+    #***model size addition per one element
+    modelElementSize=modelElementSize+ \
+                     len(modelElement["name"])+len(modelElement["id"])+ \
+                     len(modelElement["type"])+len(modelElement["symbol"])
+    #*****************************************************
     for attributeElement in elem.xpath("./www.qpr.com:Attribute",namespaces={'www.qpr.com': 'www.qpr.com'}):
         global_attribute_id+=1
+        AttributeSize=0
         #***********************************
         attr_record_counter=0
         attr_value_counter=0
@@ -105,6 +115,13 @@ def get_model_element(elem):
 
 
                 field_stat.append(one_field_stat)
+                #*****************************************************
+                #***model size addition per one field_NameValue
+                modelElementSize=modelElementSize+ \
+                                 one_field_stat["field_name_size"]+one_field_stat["field_value_size"]
+                AttributeSize=AttributeSize+ \
+                              one_field_stat["field_name_size"]+one_field_stat["field_value_size"]
+                #*****************************************************
             records.append(record)
         if len(records):
             field_values_array.append(dict(Record=records))
@@ -124,18 +141,42 @@ def get_model_element(elem):
             field_stat.append(one_field_stat)
             #records.append(record)
 
+        #*****************************************************
+        #***model size addition per one attribute
+        modelElementSize=modelElementSize+\
+                        attr_value_size_counter+\
+                        len(str(fieldName))
+        AttributeSize=AttributeSize+ \
+                         attr_value_size_counter+ \
+                         len(str(fieldName))
+        one_attribute_stat={}
+        one_attribute_stat["AttributeSize"]= AttributeSize
+        one_attribute_stat["AttributeName_size"]=one_field_stat["AttributeName_size"]
+        one_attribute_stat["attr_value_counter"]=one_field_stat["attr_value_counter"]
+        one_attribute_stat["attr_value_size_counter"]=one_field_stat["attr_value_size_counter"]
+        one_attribute_stat["attr_record_counter"]=one_field_stat["attr_record_counter"]
+        one_attribute_stat["RecordUUID"]=one_field_stat["RecordUUID"]
+        one_attribute_stat["AttributeUUID"]=one_field_stat["AttributeUUID"]
+        one_attribute_stat["ElementUUID"]=one_field_stat["ElementUUID"]
+        attribute_stat.append(one_attribute_stat)
+        #*****************************************************
         field[fieldName]=field_values_array
         data_section_2.append(field)
+
     modelElement["data_section_2"]=data_section_2
     result={}
     result["modelElement"]= modelElement
     result["record_counter"]= record_counter
     #result["value_counter"]= value_counter
-    result["element_size"]=len(str(json.dumps(modelElement,ensure_ascii=False)))
+    #*****************************************************
+    #result["element_size"]=len(str(json.dumps(modelElement,ensure_ascii=False)))
+    result["element_size"]=modelElementSize
+    #*****************************************************
     result["attribute_counter"]= attribute_counter
     result["value_sections_counter"]= value_sections_counter
     result["value_size_counter"]= value_size_counter
     result["field_stat"]=field_stat
+    result["attribute_stat"]=attribute_stat
     return result
 def uniq(seq):
     seen = set()
@@ -178,8 +219,8 @@ if __name__ == '__main__':
 
     #input_file='C:\\IdeaProjects\\hh_api_test\\MongoTest\\exp_types_formatted_few_elements.xml'
     #***input_file='exp_types_formatted_few_elements.xml'
-    input_file='C:\\Users\mdu\\Documents\\qpr_export\\exp.xml'
-    #*****input_file='C:\\Users\МишинДЮ\\Documents\\qpr_export\\exp.xml'
+    #****input_file='C:\\Users\mdu\\Documents\\qpr_export\\exp.xml'
+    input_file='C:\\Users\МишинДЮ\\Documents\\qpr_export\\exp.xml'
     events = ("start", "end")
     context = etree.iterparse(input_file,events = events, tag=('{www.qpr.com}ModelElement'))
     count=0
@@ -193,8 +234,9 @@ if __name__ == '__main__':
          spr+"value_sections_counter"+spr+"value_size_counter"+spr+"attribute_counter"+"\n"
     csv=head
     head="AttributeName_size"+spr_field_stat+"field_name_size"+spr_field_stat+"field_value_size"+spr_field_stat+ \
-         "attr_value_counter"+spr_field_stat+"attr_value_size_counter"+spr_field_stat+"attr_record_counter"+spr_field_stat+\
-         "element_size"+spr_field_stat+"type"+spr_field_stat+"RecordUUID"+spr_field_stat+"AttributeUUID"+\
+         "attr_value_counter"+spr_field_stat+"attr_value_size_counter"+spr_field_stat+"attr_record_counter"+ \
+         spr_field_stat+"element_size"+spr_field_stat+"type"+\
+         spr_field_stat+"RecordUUID"+spr_field_stat+"AttributeUUID"+\
          spr_field_stat+"ElementUUID"+"\n"
     csv_field_stat=head
     with open("model_stat_field_stat.csv","w+",encoding="utf-8")as model_stat_field_stat:
@@ -254,8 +296,8 @@ if __name__ == '__main__':
                 elem.clear()
                 while elem.getprevious() is not None:
                     del elem.getparent()[0]
-                # if count>=2000:
-                #     break
+                if count>=2000:
+                    break
         model_stat_field_stat.write(csv_field_stat)
     del context
     with open("model_stat.csv","w",encoding="utf-8")as model_stat:
