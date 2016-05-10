@@ -17,8 +17,17 @@ sys.path.append("C:\IdeaProjects\tomita_tools\MongoTest")
 from Timer import *
 import json
 import zipfile
+#import uuid
+import os
+global_element_id=0
+global_attribute_id=0
+global_attribute_record_id=0
 
 def get_model_element(elem):
+    global global_attribute_id
+    global global_element_id
+    global global_attribute_record_id
+    global_element_id+=1
     modelElement={}
     #*****************************
     modelElement["parent_object"]=""
@@ -34,11 +43,22 @@ def get_model_element(elem):
     modelElement["name"]=next(iter(elem.xpath("./@ElementName")),"")
     modelElement["id"]=next(iter(elem.xpath("./@ElementId")),"")
     modelElement["type"]=next(iter(elem.xpath("./@TypeID")),"")
+    modelElement["symbol"]=next(iter(elem.xpath("./@ElementSymbol")),"")
     data_section_2=[]
     record_counter=0
-    value_counter=0
+    #value_counter=0
+    value_sections_counter=0
+    value_size_counter=0
+    attribute_counter=0
     field_stat=[]
     for attributeElement in elem.xpath("./www.qpr.com:Attribute",namespaces={'www.qpr.com': 'www.qpr.com'}):
+        global_attribute_id+=1
+        #***********************************
+        attr_record_counter=0
+        attr_value_counter=0
+        attr_value_size_counter=0
+        #*************************************
+        attribute_counter+=1
         fieldName=next(iter(attributeElement.xpath("./@AttributeName")),"")
         fieldName=fieldName.replace('.', '\uff0E')
         field={}
@@ -48,12 +68,19 @@ def get_model_element(elem):
 
         if len(valueArray):
             field_values_array.append(dict(Value=valueArray))
-            value_counter+=1
+            value_sections_counter+=1
+            #value_counter+=len(valueArray)
+            value_size_counter+=sum(len(str(v))for v in valueArray)
+            attr_value_counter+=len(valueArray)
+            attr_value_size_counter+=sum(len(str(v))for v in valueArray)
         records=[]
         for recordElement in attributeElement.xpath("./www.qpr.com:Record",namespaces={'www.qpr.com': 'www.qpr.com'}):
+            global_attribute_record_id+=1
             #record=[]
             record={}
-            for recordFieldElement in recordElement.xpath("./www.qpr.com:Field",namespaces={'www.qpr.com': 'www.qpr.com'}):
+            recordsFieldElement=recordElement.xpath("./www.qpr.com:Field",namespaces={'www.qpr.com': 'www.qpr.com'})
+            attr_record_counter=len(recordsFieldElement)
+            for recordFieldElement in recordsFieldElement:
                 recordFieldName=next(iter(recordFieldElement.xpath("./@Name")),"")
                 recordFieldName=recordFieldName.replace('.', '\uff0E')
                 recordFieldValue=next(iter(recordFieldElement.xpath("./@Value")),"")
@@ -66,18 +93,48 @@ def get_model_element(elem):
                 one_field_stat["field_name_size"]=len(str(recordFieldName))
                 one_field_stat["field_value_size"]=len(str(recordFieldValue))
                 one_field_stat["AttributeName_size"]=len(str(fieldName))
+                one_field_stat["attr_value_counter"]=attr_value_counter
+                one_field_stat["attr_value_size_counter"]=attr_value_size_counter
+                one_field_stat["attr_record_counter"]=attr_record_counter
+
+                #one_field_stat["AttributeUUID"]=uuid.uuid4()
+                #one_field_stat["ElementUUID"]=uuid.uuid4()
+                one_field_stat["RecordUUID"]=  global_attribute_record_id
+                one_field_stat["AttributeUUID"]=  global_attribute_id
+                one_field_stat["ElementUUID"]= global_element_id
+
+
                 field_stat.append(one_field_stat)
             records.append(record)
         if len(records):
             field_values_array.append(dict(Record=records))
+        else:
+            one_field_stat={}
+            one_field_stat["field_name_size"]=0
+            one_field_stat["field_value_size"]=0
+            one_field_stat["AttributeName_size"]=len(str(fieldName))
+            one_field_stat["attr_value_counter"]=attr_value_counter
+            one_field_stat["attr_value_size_counter"]=attr_value_size_counter
+            one_field_stat["attr_record_counter"]=0
+            #one_field_stat["AttributeUUID"]=uuid.uuid4()
+            #one_field_stat["ElementUUID"]=uuid.uuid4()
+            one_field_stat["RecordUUID"]=  global_attribute_record_id
+            one_field_stat["AttributeUUID"]=  global_attribute_id
+            one_field_stat["ElementUUID"]= global_element_id
+            field_stat.append(one_field_stat)
+            #records.append(record)
+
         field[fieldName]=field_values_array
         data_section_2.append(field)
     modelElement["data_section_2"]=data_section_2
     result={}
     result["modelElement"]= modelElement
     result["record_counter"]= record_counter
-    result["value_counter"]= value_counter
+    #result["value_counter"]= value_counter
     result["element_size"]=len(str(json.dumps(modelElement,ensure_ascii=False)))
+    result["attribute_counter"]= attribute_counter
+    result["value_sections_counter"]= value_sections_counter
+    result["value_size_counter"]= value_size_counter
     result["field_stat"]=field_stat
     return result
 def uniq(seq):
@@ -121,8 +178,8 @@ if __name__ == '__main__':
 
     #input_file='C:\\IdeaProjects\\hh_api_test\\MongoTest\\exp_types_formatted_few_elements.xml'
     #***input_file='exp_types_formatted_few_elements.xml'
-    #****input_file='C:\\Users\mdu\\Documents\\qpr_export\\exp.xml'
-    input_file='C:\\Users\МишинДЮ\\Documents\\qpr_export\\exp.xml'
+    input_file='C:\\Users\mdu\\Documents\\qpr_export\\exp.xml'
+    #*****input_file='C:\\Users\МишинДЮ\\Documents\\qpr_export\\exp.xml'
     events = ("start", "end")
     context = etree.iterparse(input_file,events = events, tag=('{www.qpr.com}ModelElement'))
     count=0
@@ -131,68 +188,90 @@ if __name__ == '__main__':
     corrected_modelElement={}
     err_msg={}
     spr="\t"
-    spr_field_stat=","
-    head="name"+spr+"id"+spr+"type"+spr+"element_size"+spr+"record_counter"+spr+"value_counter"+"\n"
+    spr_field_stat="\t"
+    head="name"+spr+"id"+spr+"type"+spr+"symbol"+spr+"element_size"+spr+"record_counter"+\
+         spr+"value_sections_counter"+spr+"value_size_counter"+spr+"attribute_counter"+"\n"
     csv=head
-    head="AttributeName_size"+spr_field_stat+"field_name_size"+spr_field_stat+"field_value_size"+spr_field_stat+"element_size"+spr_field_stat+"type"+"\n"
+    head="AttributeName_size"+spr_field_stat+"field_name_size"+spr_field_stat+"field_value_size"+spr_field_stat+ \
+         "attr_value_counter"+spr_field_stat+"attr_value_size_counter"+spr_field_stat+"attr_record_counter"+spr_field_stat+\
+         "element_size"+spr_field_stat+"type"+spr_field_stat+"RecordUUID"+spr_field_stat+"AttributeUUID"+\
+         spr_field_stat+"ElementUUID"+"\n"
     csv_field_stat=head
-    for action, elem in context:
-        if action=="end":
-            count+=1
-            modelElement=get_model_element(elem)
-            #*******************************************
-            # try:
-            #     model.insert(modelElement)
-            # except errors.InvalidDocument as err:
+    with open("model_stat_field_stat.csv","w+",encoding="utf-8")as model_stat_field_stat:
+        for action, elem in context:
+            if action=="end":
+                count+=1
+                modelElement=get_model_element(elem)
+                #*******************************************
+                # try:
+                #     model.insert(modelElement)
+                # except errors.InvalidDocument as err:
 
-                # elements_with_dot_count+=1
-                # err_msg[modelElement["id"]]=str(err)
+                    # elements_with_dot_count+=1
+                    # err_msg[modelElement["id"]]=str(err)
 
 
-            sq=[]
-            sq.append(modelElement["modelElement"]["name"])
-            sq.append(modelElement["modelElement"]["id"])
-            sq.append(modelElement["modelElement"]["type"])
-            sq.append(str(modelElement["element_size"]))
-            sq.append(str(modelElement["record_counter"]))
-            sq.append(str(modelElement["value_counter"]))
-            #sq_field_stat=[]
-            for one_field_stat_dict in modelElement["field_stat"]:
-                one_field_stat=[]
-                one_field_stat.append(str(one_field_stat_dict["AttributeName_size"]))
-                one_field_stat.append(str(one_field_stat_dict["field_name_size"]))
-                one_field_stat.append(str(one_field_stat_dict["field_value_size"]))
-                one_field_stat.append(str(modelElement["element_size"]))
-                one_field_stat.append(modelElement["modelElement"]["type"])
-                #sq_field_stat.extend(one_field_stat)
-                csv_line_field_stat=spr_field_stat.join(one_field_stat)
-                csv_field_stat+=csv_line_field_stat+"\n"
-            csv_line=spr.join(sq)
-            csv+=csv_line+"\n"
-        #print(csv_line)
-            if count % 1000  == 0 or count==1:
-                print(count)
-                t.stop()
-                print(t.elapsed)
-                t.reset()
-                t.start()
-            elem.clear()
-            while elem.getprevious() is not None:
-                del elem.getparent()[0]
-            # if count>=1000:
-            #     break
+                sq=[]
+                sq.append(modelElement["modelElement"]["name"])
+                sq.append(modelElement["modelElement"]["id"])
+                sq.append(modelElement["modelElement"]["type"])
+                sq.append(modelElement["modelElement"]["symbol"])
+                sq.append(str(modelElement["element_size"]))
+                sq.append(str(modelElement["record_counter"]))
+                sq.append(str(modelElement["value_sections_counter"]))
+                sq.append(str(modelElement["value_size_counter"]))
+                sq.append(str(modelElement["attribute_counter"]))
+                #sq.append(str(modelElement["value_counter"]))
+                #sq_field_stat=[]
+                for one_field_stat_dict in modelElement["field_stat"]:
+                    one_field_stat=[]
+                    one_field_stat.append(str(one_field_stat_dict["AttributeName_size"]))
+                    one_field_stat.append(str(one_field_stat_dict["field_name_size"]))
+                    one_field_stat.append(str(one_field_stat_dict["field_value_size"]))
+                    one_field_stat.append(str(one_field_stat_dict["attr_value_counter"]))
+                    one_field_stat.append(str(one_field_stat_dict["attr_value_size_counter"]))
+                    one_field_stat.append(str(one_field_stat_dict["attr_record_counter"]))
+                    one_field_stat.append(str(modelElement["element_size"]))
+                    one_field_stat.append(modelElement["modelElement"]["type"])
+                    one_field_stat.append(str(one_field_stat_dict["RecordUUID"]))
+                    one_field_stat.append(str(one_field_stat_dict["AttributeUUID"]))
+                    one_field_stat.append(str(one_field_stat_dict["ElementUUID"]))
+
+                    #sq_field_stat.extend(one_field_stat)
+                    csv_line_field_stat=spr_field_stat.join(one_field_stat)
+                    csv_field_stat+=csv_line_field_stat+"\n"
+                csv_line=spr.join(sq)
+                csv+=csv_line+"\n"
+            #print(csv_line)
+                if count % 1000  == 0 or count==1:
+                    model_stat_field_stat.write(csv_field_stat)
+                    csv_field_stat=""
+                    print(count)
+                    t.stop()
+                    print(t.elapsed)
+                    t.reset()
+                    t.start()
+                elem.clear()
+                while elem.getprevious() is not None:
+                    del elem.getparent()[0]
+                # if count>=2000:
+                #     break
+        model_stat_field_stat.write(csv_field_stat)
     del context
     with open("model_stat.csv","w",encoding="utf-8")as model_stat:
         model_stat.write(csv)
+    #with zipfile.ZipFile("model_stat_field_stat.zip", mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+    #        zf.writestr("model_stat_field_stat.csv", csv_field_stat.encode("utf-8"))
     with zipfile.ZipFile("model_stat_field_stat.zip", mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr("model_stat_field_stat.csv", csv_field_stat.encode("utf-8"))
-    # with open("model_stat_field_stat.csv","w",encoding="utf-8")as model_stat_field_stat:
-    #     model_stat_field_stat.write(csv_field_stat)
+            zf.write("model_stat_field_stat.csv")
+    os.remove("model_stat_field_stat.csv")
+     #with open("model_stat_field_stat.csv","w",encoding="utf-8")as model_stat_field_stat:
+     #    model_stat_field_stat.write(csv_field_stat)
 
     print(count)
     t.stop()
     print(t.elapsed)
-    time_total.stop() 
+    time_total.stop()
     print("Total import time:{}".format(time_total.elapsed))
     print("Total elements:{}".format(count))
     #print("Elements with dot in field name:{}".format(elements_with_dot_count))
