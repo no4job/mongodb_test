@@ -46,6 +46,7 @@ def get_model_element(elem):
     modelElement["id"]=next(iter(elem.xpath("./@ElementId")),"")
     modelElement["type"]=next(iter(elem.xpath("./@TypeID")),"")
     modelElement["symbol"]=next(iter(elem.xpath("./@ElementSymbol")),"")
+    modelElement["ElementUUID"]=str(global_element_id)
     data_section_2=[]
     record_counter=0
     #value_counter=0
@@ -227,8 +228,8 @@ if __name__ == '__main__':
 
     #input_file='C:\\IdeaProjects\\hh_api_test\\MongoTest\\exp_types_formatted_few_elements.xml'
     #***input_file='exp_types_formatted_few_elements.xml'
-    input_file='C:\\Users\mdu\\Documents\\qpr_export\\exp.xml'
-    #****input_file='C:\\Users\МишинДЮ\\Documents\\qpr_export\\exp.xml'
+    #****input_file='C:\\Users\mdu\\Documents\\qpr_export\\exp.xml'
+    input_file='C:\\Users\МишинДЮ\\Documents\\qpr_export\\exp.xml'
     events = ("start", "end")
     context = etree.iterparse(input_file,events = events, tag=('{www.qpr.com}ModelElement'))
     count=0
@@ -239,7 +240,8 @@ if __name__ == '__main__':
     spr="\t"
     spr_field_stat="\t"
     head="name"+spr+"id"+spr+"type"+spr+"symbol"+spr+"element_size"+spr+"record_counter"+\
-         spr+"value_sections_counter"+spr+"value_size_counter"+spr+"attribute_counter"+"\n"
+         spr+"value_sections_counter"+spr+"value_size_counter"+spr+"attribute_counter"+ \
+         spr+"ElementUUID"+"\n"
     csv=head
     head="AttributeName_size"+spr_field_stat+"field_name_size"+spr_field_stat+"field_value_size"+spr_field_stat+ \
          "attr_value_counter"+spr_field_stat+"attr_value_size_counter"+spr_field_stat+"attr_record_counter"+ \
@@ -249,8 +251,8 @@ if __name__ == '__main__':
     csv_field_stat=head
     head="AttributeName_size"+spr_field_stat+"attr_value_counter"+spr_field_stat+"attr_value_size_counter"+spr_field_stat+ \
          "attr_record_counter"+spr_field_stat+"AttributeSize"+spr_field_stat+\
-         "Attribute_field_NameSize"+spr_field_stat+"Attribute_field_ValueSize"+spr_field_stat+\
-         "AttributeUUID"+spr_field_stat+"ElementUUID"+"\n"
+         "Attribute_field_NameSize"+spr_field_stat+"Attribute_field_ValueSize"+spr_field_stat+ \
+         "attribute_counter"+spr_field_stat+"AttributeUUID"+spr_field_stat+"ElementUUID"+"\n"
     csv_attribute_stat=head
 
     with open("model_stat_field_stat.csv","w+",encoding="utf-8")as model_stat_field_stat,\
@@ -269,7 +271,8 @@ if __name__ == '__main__':
 
 
                 sq=[]
-                sq.append(modelElement["modelElement"]["name"])
+                #sq.append(modelElement["modelElement"]["name"])
+                sq.append("x"*len(modelElement["modelElement"]["name"]))
                 sq.append(modelElement["modelElement"]["id"])
                 sq.append(modelElement["modelElement"]["type"])
                 sq.append(modelElement["modelElement"]["symbol"])
@@ -278,6 +281,7 @@ if __name__ == '__main__':
                 sq.append(str(modelElement["value_sections_counter"]))
                 sq.append(str(modelElement["value_size_counter"]))
                 sq.append(str(modelElement["attribute_counter"]))
+                sq.append(str(modelElement["modelElement"]["ElementUUID"]))
                 #sq.append(str(modelElement["value_counter"]))
                 #sq_field_stat=[]
                 attribute_size_data={}
@@ -314,6 +318,7 @@ if __name__ == '__main__':
                     one_field_attribute.append(str(one_field_attribute_dict["AttributeSize"]))
                     one_field_attribute.append(str(one_field_attribute_dict["Attribute_field_NameSize"]))
                     one_field_attribute.append(str(one_field_attribute_dict["Attribute_field_ValueSize"]))
+                    one_field_attribute.append(str(modelElement["attribute_counter"]))
                     one_field_attribute.append(str(one_field_attribute_dict["AttributeUUID"]))
                     one_field_attribute.append(str(one_field_attribute_dict["ElementUUID"]))
 
