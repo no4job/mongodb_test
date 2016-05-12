@@ -63,6 +63,8 @@ def get_model_element(elem):
     for attributeElement in elem.xpath("./www.qpr.com:Attribute",namespaces={'www.qpr.com': 'www.qpr.com'}):
         global_attribute_id+=1
         AttributeSize=0
+        Attribute_field_NameSize=0
+        Attribute_field_ValueSize=0
         #***********************************
         attr_record_counter=0
         attr_value_counter=0
@@ -121,6 +123,9 @@ def get_model_element(elem):
                                  one_field_stat["field_name_size"]+one_field_stat["field_value_size"]
                 AttributeSize=AttributeSize+ \
                               one_field_stat["field_name_size"]+one_field_stat["field_value_size"]
+                Attribute_field_NameSize+= one_field_stat["field_name_size"]
+                Attribute_field_ValueSize+= one_field_stat["field_value_size"]
+
                 #*****************************************************
             records.append(record)
         if len(records):
@@ -155,7 +160,10 @@ def get_model_element(elem):
         one_attribute_stat["attr_value_counter"]=one_field_stat["attr_value_counter"]
         one_attribute_stat["attr_value_size_counter"]=one_field_stat["attr_value_size_counter"]
         one_attribute_stat["attr_record_counter"]=one_field_stat["attr_record_counter"]
-        one_attribute_stat["RecordUUID"]=one_field_stat["RecordUUID"]
+        #one_attribute_stat["RecordUUID"]=one_field_stat["RecordUUID"]
+        one_attribute_stat["attr_record_counter"]=one_field_stat["attr_record_counter"]
+        one_attribute_stat["Attribute_field_NameSize"]=Attribute_field_NameSize
+        one_attribute_stat["Attribute_field_ValueSize"]=Attribute_field_ValueSize
         one_attribute_stat["AttributeUUID"]=one_field_stat["AttributeUUID"]
         one_attribute_stat["ElementUUID"]=one_field_stat["ElementUUID"]
         attribute_stat.append(one_attribute_stat)
@@ -219,8 +227,8 @@ if __name__ == '__main__':
 
     #input_file='C:\\IdeaProjects\\hh_api_test\\MongoTest\\exp_types_formatted_few_elements.xml'
     #***input_file='exp_types_formatted_few_elements.xml'
-    #****input_file='C:\\Users\mdu\\Documents\\qpr_export\\exp.xml'
-    input_file='C:\\Users\МишинДЮ\\Documents\\qpr_export\\exp.xml'
+    input_file='C:\\Users\mdu\\Documents\\qpr_export\\exp.xml'
+    #****input_file='C:\\Users\МишинДЮ\\Documents\\qpr_export\\exp.xml'
     events = ("start", "end")
     context = etree.iterparse(input_file,events = events, tag=('{www.qpr.com}ModelElement'))
     count=0
@@ -235,11 +243,18 @@ if __name__ == '__main__':
     csv=head
     head="AttributeName_size"+spr_field_stat+"field_name_size"+spr_field_stat+"field_value_size"+spr_field_stat+ \
          "attr_value_counter"+spr_field_stat+"attr_value_size_counter"+spr_field_stat+"attr_record_counter"+ \
-         spr_field_stat+"element_size"+spr_field_stat+"type"+\
+         spr_field_stat+"AttributeSize"+spr_field_stat+"element_size"+spr_field_stat+"type"+\
          spr_field_stat+"RecordUUID"+spr_field_stat+"AttributeUUID"+\
          spr_field_stat+"ElementUUID"+"\n"
     csv_field_stat=head
-    with open("model_stat_field_stat.csv","w+",encoding="utf-8")as model_stat_field_stat:
+    head="AttributeName_size"+spr_field_stat+"attr_value_counter"+spr_field_stat+"attr_value_size_counter"+spr_field_stat+ \
+         "attr_record_counter"+spr_field_stat+"AttributeSize"+spr_field_stat+\
+         "Attribute_field_NameSize"+spr_field_stat+"Attribute_field_ValueSize"+spr_field_stat+\
+         "AttributeUUID"+spr_field_stat+"ElementUUID"+"\n"
+    csv_attribute_stat=head
+
+    with open("model_stat_field_stat.csv","w+",encoding="utf-8")as model_stat_field_stat,\
+         open("model_stat_attribute_stat.csv","w+",encoding="utf-8")as model_stat_attribute_stat:
         for action, elem in context:
             if action=="end":
                 count+=1
@@ -265,6 +280,10 @@ if __name__ == '__main__':
                 sq.append(str(modelElement["attribute_counter"]))
                 #sq.append(str(modelElement["value_counter"]))
                 #sq_field_stat=[]
+                attribute_size_data={}
+                for one_field_attribute_dict in modelElement["attribute_stat"]:
+                    attribute_size_data[str(one_field_attribute_dict["AttributeUUID"])]= \
+                        str(one_field_attribute_dict["AttributeSize"])
                 for one_field_stat_dict in modelElement["field_stat"]:
                     one_field_stat=[]
                     one_field_stat.append(str(one_field_stat_dict["AttributeName_size"]))
@@ -273,6 +292,7 @@ if __name__ == '__main__':
                     one_field_stat.append(str(one_field_stat_dict["attr_value_counter"]))
                     one_field_stat.append(str(one_field_stat_dict["attr_value_size_counter"]))
                     one_field_stat.append(str(one_field_stat_dict["attr_record_counter"]))
+                    one_field_stat.append(str(attribute_size_data[str(one_field_stat_dict["AttributeUUID"])]))
                     one_field_stat.append(str(modelElement["element_size"]))
                     one_field_stat.append(modelElement["modelElement"]["type"])
                     one_field_stat.append(str(one_field_stat_dict["RecordUUID"]))
@@ -284,10 +304,29 @@ if __name__ == '__main__':
                     csv_field_stat+=csv_line_field_stat+"\n"
                 csv_line=spr.join(sq)
                 csv+=csv_line+"\n"
+                #******************************
+                for one_field_attribute_dict in modelElement["attribute_stat"]:
+                    one_field_attribute=[]
+                    one_field_attribute.append(str(one_field_attribute_dict["AttributeName_size"]))
+                    one_field_attribute.append(str(one_field_attribute_dict["attr_value_counter"]))
+                    one_field_attribute.append(str(one_field_attribute_dict["attr_value_size_counter"]))
+                    one_field_attribute.append(str(one_field_attribute_dict["attr_record_counter"]))
+                    one_field_attribute.append(str(one_field_attribute_dict["AttributeSize"]))
+                    one_field_attribute.append(str(one_field_attribute_dict["Attribute_field_NameSize"]))
+                    one_field_attribute.append(str(one_field_attribute_dict["Attribute_field_ValueSize"]))
+                    one_field_attribute.append(str(one_field_attribute_dict["AttributeUUID"]))
+                    one_field_attribute.append(str(one_field_attribute_dict["ElementUUID"]))
+
+                    #sq_field_stat.extend(one_field_attribute)
+                    csv_line_attribute_stat=spr_field_stat.join(one_field_attribute)
+                    csv_attribute_stat+=csv_line_attribute_stat+"\n"
+                #*******************************
             #print(csv_line)
                 if count % 1000  == 0 or count==1:
                     model_stat_field_stat.write(csv_field_stat)
                     csv_field_stat=""
+                    model_stat_attribute_stat.write(csv_attribute_stat)
+                    csv_attribute_stat=""
                     print(count)
                     t.stop()
                     print(t.elapsed)
@@ -296,8 +335,8 @@ if __name__ == '__main__':
                 elem.clear()
                 while elem.getprevious() is not None:
                     del elem.getparent()[0]
-                if count>=2000:
-                    break
+                # if count>=2000:
+                #     break
         model_stat_field_stat.write(csv_field_stat)
     del context
     with open("model_stat.csv","w",encoding="utf-8")as model_stat:
@@ -307,6 +346,9 @@ if __name__ == '__main__':
     with zipfile.ZipFile("model_stat_field_stat.zip", mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
             zf.write("model_stat_field_stat.csv")
     os.remove("model_stat_field_stat.csv")
+    with zipfile.ZipFile("model_stat_attribute_stat.zip", mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.write("model_stat_attribute_stat.csv")
+    os.remove("model_stat_attribute_stat.csv")
      #with open("model_stat_field_stat.csv","w",encoding="utf-8")as model_stat_field_stat:
      #    model_stat_field_stat.write(csv_field_stat)
 
