@@ -228,8 +228,8 @@ if __name__ == '__main__':
 
     #input_file='C:\\IdeaProjects\\hh_api_test\\MongoTest\\exp_types_formatted_few_elements.xml'
     #***input_file='exp_types_formatted_few_elements.xml'
-    #****input_file='C:\\Users\mdu\\Documents\\qpr_export\\exp.xml'
-    input_file='C:\\Users\МишинДЮ\\Documents\\qpr_export\\exp.xml'
+    input_file='C:\\Users\mdu\\Documents\\qpr_export\\exp.xml'
+    #*****input_file='C:\\Users\МишинДЮ\\Documents\\qpr_export\\exp.xml'
     events = ("start", "end")
     context = etree.iterparse(input_file,events = events, tag=('{www.qpr.com}ModelElement'))
     count=0
@@ -245,8 +245,8 @@ if __name__ == '__main__':
     csv=head
     head="AttributeName_size"+spr_field_stat+"field_name_size"+spr_field_stat+"field_value_size"+spr_field_stat+ \
          "attr_value_counter"+spr_field_stat+"attr_value_size_counter"+spr_field_stat+"attr_record_counter"+ \
-         spr_field_stat+"AttributeSize"+spr_field_stat+"element_size"+spr_field_stat+"type"+\
-         spr_field_stat+"RecordUUID"+spr_field_stat+"AttributeUUID"+\
+         spr_field_stat+"AttributeSize"+spr_field_stat+"element_size"+spr_field_stat+"type"+ \
+         spr_field_stat+"attribute_counter"+spr_field_stat+"RecordUUID"+spr_field_stat+"AttributeUUID"+\
          spr_field_stat+"ElementUUID"+"\n"
     csv_field_stat=head
     head="AttributeName_size"+spr_field_stat+"attr_value_counter"+spr_field_stat+"attr_value_size_counter"+spr_field_stat+ \
@@ -299,6 +299,7 @@ if __name__ == '__main__':
                     one_field_stat.append(str(attribute_size_data[str(one_field_stat_dict["AttributeUUID"])]))
                     one_field_stat.append(str(modelElement["element_size"]))
                     one_field_stat.append(modelElement["modelElement"]["type"])
+                    one_field_stat.append(str(modelElement["attribute_counter"]))
                     one_field_stat.append(str(one_field_stat_dict["RecordUUID"]))
                     one_field_stat.append(str(one_field_stat_dict["AttributeUUID"]))
                     one_field_stat.append(str(one_field_stat_dict["ElementUUID"]))
