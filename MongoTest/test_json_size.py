@@ -92,7 +92,7 @@ def get_model_element(elem):
             #record=[]
             record={}
             recordsFieldElement=recordElement.xpath("./www.qpr.com:Field",namespaces={'www.qpr.com': 'www.qpr.com'})
-            attr_record_counter=len(recordsFieldElement)
+            attr_record_counter+=len(recordsFieldElement)
             for recordFieldElement in recordsFieldElement:
                 recordFieldName=next(iter(recordFieldElement.xpath("./@Name")),"")
                 recordFieldName=recordFieldName.replace('.', '\uff0E')
@@ -241,7 +241,8 @@ if __name__ == '__main__':
     spr_field_stat="\t"
     head="name"+spr+"id"+spr+"type"+spr+"symbol"+spr+"element_size"+spr+"record_counter"+\
          spr+"value_sections_counter"+spr+"value_size_counter"+spr+"attribute_counter"+ \
-         spr+"ElementUUID"+"\n"
+         spr+"ElementName_Size"+spr+"ElementID_Size"+spr+"ElementType_Size"+spr+"ElementSymbol_Size"+spr+\
+         "ElementUUID"+"\n"
     csv=head
     head="AttributeName_size"+spr_field_stat+"field_name_size"+spr_field_stat+"field_value_size"+spr_field_stat+ \
          "attr_value_counter"+spr_field_stat+"attr_value_size_counter"+spr_field_stat+"attr_record_counter"+ \
@@ -281,6 +282,10 @@ if __name__ == '__main__':
                 sq.append(str(modelElement["value_sections_counter"]))
                 sq.append(str(modelElement["value_size_counter"]))
                 sq.append(str(modelElement["attribute_counter"]))
+                sq.append(str(len(modelElement["modelElement"]["name"])))
+                sq.append(str(len(modelElement["modelElement"]["id"])))
+                sq.append(str(len(modelElement["modelElement"]["type"])))
+                sq.append(str(len(modelElement["modelElement"]["symbol"])))
                 sq.append(str(modelElement["modelElement"]["ElementUUID"]))
                 #sq.append(str(modelElement["value_counter"]))
                 #sq_field_stat=[]
