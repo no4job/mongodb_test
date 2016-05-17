@@ -50,12 +50,14 @@ with open (clusterDescriptionFile,"r") as f:
     for clusterDescriptionDict in clusterDescriptions:
         clusterDescriptor = ClusterDescriptor(**clusterDescriptionDict)
         for element_number in range(1,clusterDescriptor.document_number+1):
-            for element_type in range(1,clusterDescriptor.types_number+1):
-                document=createElement(clusterDescriptor,element_number,element_type)
-                try:
-                    model.insert(document)
-                except errors.InvalidDocument as err:
-                    print(str(err))
+            #for element_type in range(1,clusterDescriptor.types_number+1):
+            element_type = element_number %  clusterDescriptor.types_number
+            element_type = element_type if element_type else 1
+            document=createElement(clusterDescriptor,element_number,element_type)
+            try:
+                model.insert(document)
+            except errors.InvalidDocument as err:
+                print(str(err))
             if element_number % 1000  == 0 or element_number==1:
                 t.stop()
                 print(t.elapsed)
