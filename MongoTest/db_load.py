@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from pymongo import errors
 from Timer import *
 
-def createElement(clusterDescriptor,number,type):
+def createElement(clusterDescriptor,number,type,count=1,array=0):
     modelElement={}
     modelElement["name"]=clusterDescriptor.get_s1_name(number)
     modelElement["id"]=clusterDescriptor.get_s1_name(number)
@@ -21,16 +21,27 @@ def createElement(clusterDescriptor,number,type):
     modelElement["deleted"]="false"
     data_section_2={}
     for field_x_number in range(1,clusterDescriptor.field_x_number+1):
-        field_x=[]
+        if array:
+            field_x=[]
+        else:
+            field_x={}
         field_x_name=clusterDescriptor.get_field_x_name(field_x_number)
         data_section_2[field_x_name]=field_x
-        data_section_2[field_x_name].append({})
+        if array:
+            data_section_2[field_x_name].append({})
         if field_x_number > clusterDescriptor.field_x_number*clusterDescriptor.empty_field_x_ratio/100:
             continue
         for field_x_x_number in range(1,clusterDescriptor.field_x_x_number+1):
                 field_x_x_name=clusterDescriptor.get_field_x_x_name(field_x_x_number)
                 field_x_x_value=clusterDescriptor.get_field_x_x_value(field_x_x_number)
-                data_section_2[field_x_name][0][field_x_x_name]=field_x_x_value
+                #**********************
+                if field_x_x_number == 2 and count % 100 ==0:
+                    field_x_x_value = field_x_x_value+"1"
+                #**********************
+                if array:
+                    data_section_2[field_x_name][0][field_x_x_name]=field_x_x_value
+                else:
+                    data_section_2[field_x_name][field_x_x_name]=field_x_x_value
     modelElement["data_section_2"]=data_section_2
     return modelElement
 
@@ -53,7 +64,7 @@ with open (clusterDescriptionFile,"r") as f:
             #for element_type in range(1,clusterDescriptor.types_number+1):
             element_type = element_number %  clusterDescriptor.types_number
             element_type = element_type if element_type else 1
-            document=createElement(clusterDescriptor,element_number,element_type)
+            document=createElement(clusterDescriptor,element_number,element_type,element_number)
             try:
                 model.insert(document)
             except errors.InvalidDocument as err:
