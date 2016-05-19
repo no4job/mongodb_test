@@ -4,7 +4,9 @@ from  ClusterDescriptor import *
 from datetime import datetime
 from pymongo import MongoClient
 from pymongo import errors
+#from pymongo import IndexModel, ASCENDING, DESCENDING
 from Timer import *
+
 
 def createElement(clusterDescriptor,number,type,count=1,array=0):
     modelElement={}
@@ -12,8 +14,8 @@ def createElement(clusterDescriptor,number,type,count=1,array=0):
     modelElement["id"]=clusterDescriptor.get_s1_name(number)
     modelElement["type"]=clusterDescriptor.get_s1_type(type)
     modelElement["description"]=clusterDescriptor.get_s1_description(number)
-    modelElement["native_id"]=""
-    modelElement["parent_object"]=""
+    modelElement["native_id"]=count
+    modelElement["parent_object"]="x"+str(count)
     modelElement["model_revision"]=""
     modelElement["creation_date"] = str(datetime.now()).replace('.', '\uff0E')
     modelElement["change_date"]= str(datetime.now()).replace('.', '\uff0E')
@@ -51,22 +53,30 @@ client = MongoClient()
 client.drop_database("modelDB")
 db=client.modelDB
 model = db.model
+model.create_index("native_id")
 time_total=Timer()
 time_total.start()
 t = Timer()
 t.start()
+db_t = Timer()
 
+
+count=0
 with open (clusterDescriptionFile,"r") as f:
     clusterDescriptions = csv.DictReader(f,delimiter=";")
     for clusterDescriptionDict in clusterDescriptions:
         clusterDescriptor = ClusterDescriptor(**clusterDescriptionDict)
         for element_number in range(1,clusterDescriptor.document_number+1):
+            count+=1
             #for element_type in range(1,clusterDescriptor.types_number+1):
             element_type = element_number %  clusterDescriptor.types_number
             element_type = element_type if element_type else 1
-            document=createElement(clusterDescriptor,element_number,element_type,element_number)
+            document=createElement(clusterDescriptor,element_number,element_type,
+                                   count)
             try:
+                db_t.start()
                 model.insert(document)
+                db_t.stop()
             except errors.InvalidDocument as err:
                 print(str(err))
             if element_number % 1000  == 0 or element_number==1:
@@ -80,6 +90,7 @@ print(t.elapsed)
 time_total.stop()
 print("cluster:"+str(clusterDescriptor.cluster)+"   element:"+str(element_number))
 print("Total import time:{}".format(time_total.elapsed))
+print("DB insert time:{}".format(db_t.elapsed))
 print("Inserted documents:{}".format(model.count()))
 
 
