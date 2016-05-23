@@ -99,6 +99,7 @@ def test_3(db,collectionName,search_doc,projection={},save=0,limit=0):
 client = MongoClient()
 db=client.modelDB
 model = db.model
+#model_idx = db.model_idx
 #idList=getObjectIDList(db,"model")
 #***failed: document size more than 16mb *******************
 # all_documents={}
@@ -109,9 +110,10 @@ model = db.model
 #******test_1_1 success************
 #load documents (54885) one by one, objects were not saved
 #Result:21.599647520728542:myPC:37.52616617560763
-# idList=getObjectIDList(db,"model")
-# test_1(idList,1,{"native_id":1})
-
+#idList=getObjectIDList(db,"model")
+#test_1(idList,1,{"native_id":1})
+#test_1(idList,1)
+#exit (0)
 #******test_1_2 success************
 #load documents (54885) one by one, ,create list of objects
 #Result:myPC:53.67317396700944
@@ -122,6 +124,7 @@ model = db.model
 #find all all document in collection(54885),iterate cursor,create list of objects
 #Result:myPC:78.45585345958517
 # test_2(db,"model",1)
+# test_2(db,"model_idx",1)
 # exit(0)
 
 #******test_2_2 success************
@@ -165,6 +168,18 @@ projection={"native_id":1}
 values_1 = [1000]
 values_10 = [1000+i*1000 for i in range(10)]
 values_100 = [1000+i*100 for i in range(100)]
+#*****************
+# values_100 = [1000+i*100 for i in range(100)]
+# values_200 = [1000+i*100 for i in range(100)]
+# values_300 = [1000+i*100 for i in range(100)]
+# values_400 = [1000+i*100 for i in range(100)]
+# values_500 = [1000+i*100 for i in range(100)]
+# values_600 = [1000+i*100 for i in range(100)]
+# values_700 = [1000+i*100 for i in range(100)]
+# values_800 = [1000+i*100 for i in range(100)]
+# values_900 = [1000+i*100 for i in range(100)]
+# values_1000 = [1000+i*100 for i in range(100)]
+#*****************
 values_1000 = [1000+i*50 for i in range(1000)]
 values_10000 = [1000+i*5 for i in range(10000)]
 values_50000 = [1000+i*1 for i in range(50000)]
@@ -184,6 +199,58 @@ values_7841 = [1+i*1 for i in range(7841)]
 
 # test_3(db,"model",{"$where" : "this.native_id % 7 == 3"},projection,save)
 # test_3(db,"model",{"native_id" : {"$in":values_7841}},projection,save)
+
+projection={}
+save=1
+# for i in range(100,30000,100):
+#     values_x = [1000+k*1 for k in range(i)]
+#     test_3(db,"model",{"native_id" : {"$in":values_x}},projection,save)
+# for i in range(100,30000,100):
+#     values_x = [1000+k*1 for k in range(i)]
+#     test_3(db,"model_idx",{"native_id" : {"$in":values_x}},projection,save)
+
+# for i in range(1,1000,1):
+#     values_x = [1000+k*21 for k in range(i)]
+#     test_3(db,"model",{"native_id" : {"$in":values_x}},projection,save)
+# for i in range(1,1000,1):
+#     values_x = [1000+k*22 for k in range(i)]
+#     test_3(db,"model_idx",{"native_id" : {"$in":values_x}},projection,save)
+
+# for i in range(1,1000,1):
+#     values_x = [33000+k*5 for k in range(i)]
+#     test_3(db,"model",{"native_id" : {"$in":values_x}},projection,save)
+# for i in range(1,1000,1):
+#     values_x = [33000+k*6 for k in range(i)]
+#     test_3(db,"model_idx",{"native_id" : {"$in":values_x}},projection,save)
+
+# for i in range(100,10000,100):
+#     values_x = [33000+k*1 for k in range(i)]
+#     test_3(db,"model",{"native_id" : {"$in":values_x}},projection,save)
+# for i in range(100,10000,100):
+#     values_x = [33000+k*1+1 for k in range(i)]
+#     test_3(db,"model_idx",{"native_id" : {"$in":values_x}},projection,save)
+
+# for i in range(1,1000,1):
+#     values_x = [45000+k*5 for k in range(i)]
+#     test_3(db,"model",{"native_id" : {"$in":values_x}},projection,save)
+# for i in range(1,1000,1):
+#     values_x = [45000+k*6 for k in range(i)]
+#     test_3(db,"model_idx",{"native_id" : {"$in":values_x}},projection,save)
+
+# for i in range(100,9100,100):
+#     values_x = [44200+k*1 for k in range(i)]
+#     test_3(db,"model",{"native_id" : {"$in":values_x}},projection,save)
+# for i in range(100,9100,100):
+#     values_x = [44200+k*1+1 for k in range(i)]
+#     test_3(db,"model_idx",{"native_id" : {"$in":values_x}},projection,save)
+
+for i in range(1,1000,1):
+    values_x = [53750+k*1 for k in range(i)]
+    test_3(db,"model",{"native_id" : {"$in":values_x}},projection,save)
+for i in range(1,1000,1):
+    values_x = [53750+k*1 for k in range(i)]
+    test_3(db,"model_idx",{"native_id" : {"$in":values_x}},projection,save)
+
 exit (0)
 
 #test_3(db,"model",{"data_section_2" : { "$exists": True}})

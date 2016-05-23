@@ -7,6 +7,20 @@ from pymongo import errors
 #from pymongo import IndexModel, ASCENDING, DESCENDING
 from Timer import *
 
+def getDocumentSize(document):
+    documentSize=0
+    if type(document) == dict:
+        for field in document:
+            documentSize+= len(field)
+            documentSize+= getDocumentSize(document[field])
+        return documentSize
+    elif type(document) == list:
+        for field in document:
+            documentSize+= getDocumentSize(field)
+        return documentSize
+    else:
+        return len(str(document))
+
 
 def createElement(clusterDescriptor,number,type,count=1,array=0):
     modelElement={}
@@ -53,7 +67,9 @@ client = MongoClient()
 client.drop_database("modelDB")
 db=client.modelDB
 model = db.model
-model.create_index("native_id")
+#model.create_index("native_id")
+model_idx = db.model_idx
+model_idx.create_index("native_id")
 time_total=Timer()
 time_total.start()
 t = Timer()
@@ -62,10 +78,22 @@ db_t = Timer()
 
 
 count=0
+element_size={}
+bulk = db.model.initialize_unordered_bulk_op()
+bulk_idx = db.model_idx.initialize_unordered_bulk_op()
 with open (clusterDescriptionFile,"r") as f:
     clusterDescriptions = csv.DictReader(f,delimiter=";")
     for clusterDescriptionDict in clusterDescriptions:
         clusterDescriptor = ClusterDescriptor(**clusterDescriptionDict)
+        #*******************
+        document=createElement(clusterDescriptor,clusterDescriptor.document_number+1,1,count+1+clusterDescriptor.document_number)
+        max=getDocumentSize(document)
+        document=createElement(clusterDescriptor,1,1,count+1)
+        min=getDocumentSize(document)
+        element_size[clusterDescriptor.cluster]= []
+        element_size[clusterDescriptor.cluster].append((max+min)/2)
+        element_size[clusterDescriptor.cluster].append((max-min)/element_size[clusterDescriptor.cluster][0])
+        #*******************
         for element_number in range(1,clusterDescriptor.document_number+1):
             count+=1
             #for element_type in range(1,clusterDescriptor.types_number+1):
@@ -75,7 +103,14 @@ with open (clusterDescriptionFile,"r") as f:
                                    count)
             try:
                 db_t.start()
-                model.insert(document)
+                #model.insert(document)
+                bulk.insert(document)
+                bulk_idx.insert(document)
+                if count % 990 == 0:
+                    bulk.execute()
+                    bulk = db.model.initialize_unordered_bulk_op()
+                    bulk_idx.execute()
+                    bulk_idx = db.model_idx.initialize_unordered_bulk_op()
                 db_t.stop()
             except errors.InvalidDocument as err:
                 print(str(err))
@@ -85,6 +120,12 @@ with open (clusterDescriptionFile,"r") as f:
                 t.reset()
                 t.start()
                 print("cluster:"+str(clusterDescriptor.cluster)+"   element:"+str(element_number))
+try:
+    bulk.execute()
+    bulk_idx.execute()
+except errors.InvalidOperation as io:
+    pass
+
 t.stop()
 print(t.elapsed)
 time_total.stop()
@@ -92,6 +133,9 @@ print("cluster:"+str(clusterDescriptor.cluster)+"   element:"+str(element_number
 print("Total import time:{}".format(time_total.elapsed))
 print("DB insert time:{}".format(db_t.elapsed))
 print("Inserted documents:{}".format(model.count()))
+for k,v in element_size.items():
+    print("cluster {} element size: {}, +/-{:.2%}".format(k, v[0],v[1]))
+
 
 
 
