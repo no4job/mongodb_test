@@ -30,6 +30,24 @@ def createElement(clusterDescriptor,number,type,count=1,array=0):
     modelElement["description"]=clusterDescriptor.get_s1_description(number)
     modelElement["native_id"]=count
     modelElement["parent_object"]="x"+str(count)
+    #*************************
+    modelElement["model_test_dict"]={}
+    modelElement["model_test_dict"]["list_of_values"]=[1,2,3,4,5,6,7,8,9,10]
+    modelElement["model_test_dict"]["list_of_dicts"]=[
+                                                        {"value_1":11,"value_2":12,"value_3":13},
+                                                        {"value_1":21,"value_2":22,"value_3":23},
+                                                        {"value_1":31,"value_2":32,"value_3":33},
+                                                        {"value_1":41,"value_2":42,"value_3":43},
+                                                        {"value_1":51,"value_2":52,"value_3":53},
+                                                        {"value_1":61,"value_2":62,"value_3":63},
+                                                        {"value_1":71,"value_2":72,"value_3":73},
+                                                        {"value_1":81,"value_2":82,"value_3":83},
+                                                        {"value_1":91,"value_2":92,"value_3":93},
+                                                        {"value_1":101,"value_2":102,"value_3":103}
+                                                      ]
+    modelElement["model_test_dict"]["value"]=1
+    modelElement["model_test_array"]=[1,2,3,4,5,6,7,8,9,10]
+    #***************************
     modelElement["model_revision"]=""
     modelElement["creation_date"] = str(datetime.now()).replace('.', '\uff0E')
     modelElement["change_date"]= str(datetime.now()).replace('.', '\uff0E')

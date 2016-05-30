@@ -12,7 +12,9 @@ def getObjectIDList_str(db,collectionName):
     c = db[collectionName]
     #print("Number of documents:{}".format(c.count()))
     cursor=c.find({}, {"_id" : 1})
-    idList=list(map(str,(d["_id"]for d in cursor)))
+    #idList=list(map(str,(d["_id"]for d in cursor)))
+    #idList=[d["_id"]for d in cursor]
+    idList=[str(_id["_id"]) for _id in cursor]
     return idList
 def getObjectIDList(db,collectionName):
     c = db[collectionName]
@@ -46,10 +48,14 @@ def test_1(idList,save,projection={}):
     #****************
     documentList=[]
     for id in range(len(idList)):
-        if projection:
-            doc=model.find_one({"_id": idList[id]},projection)
+        if type(idList[id])==str:
+            _id=ObjectId(idList[id])
         else:
-            doc=model.find_one({"_id": idList[id]})
+            _id=idList[id]
+        if projection:
+            doc=model.find_one({"_id": _id},projection)
+        else:
+            doc=model.find_one({"_id": _id})
 
         # doc=model.find_one({"_id": idList[id]})
         if save:
@@ -61,6 +67,7 @@ def test_1(idList,save,projection={}):
             t.start()
     time_total.stop()
     print("Total:{}, load time:{}".format(len(idList),time_total.elapsed))
+    return documentList
 def test_2(db,collectionName,save):
     time_total=Timer()
     time_total.start()
@@ -111,9 +118,18 @@ model = db.model
 #load documents (54885) one by one, objects were not saved
 #Result:21.599647520728542:myPC:37.52616617560763
 #idList=getObjectIDList(db,"model")
-#test_1(idList,1,{"native_id":1})
-#test_1(idList,1)
-#exit (0)
+idList=getObjectIDList_str(db,"model")
+result=test_1(idList,1,{"_id":0,"native_id":1})
+result=test_1(idList,1,{"_id":1})
+#result=test_1(idList,1,{"_id":0,"model_test_array":[1,{ "$slice": [ 1, 3 ] }]})
+#result=test_1(idList,1,{"_id":0,"model_test_dict.value":1})
+#result=test_1(idList,1,{"_id":0,"model_test_dict.list_of_dicts":1})
+#result=test_1(idList,1,{"_id":0,"model_test_dict.list_of_dicts":[1,{ "$slice": [ 3,5 ] }],})
+#result=test_1(idList,1,{"_id":0,"model_test_dict":1,"model_test_dict.list_of_dicts":{ "$slice": [ 3,1 ] }})
+# result=test_1(idList,1,{"_id":0,"data_section_2":0,"model_test_dict.list_of_values":0,"model_test_dict.value":0,
+#                         "model_test_dict.list_of_dicts":{ "$slice": [ 3,1 ] }})
+#result=test_1(idList,1)
+exit (0)
 #******test_1_2 success************
 #load documents (54885) one by one, ,create list of objects
 #Result:myPC:53.67317396700944
